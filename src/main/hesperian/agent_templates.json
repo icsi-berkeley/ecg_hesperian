@@ -1,0 +1,12 @@
+{
+  "templates": {
+
+    "_notify": {
+      "kind": "notification",
+      "action": "is",
+      "predication": "location",
+      "information": null,
+      "protagonist": null
+    }
+  }
+}
