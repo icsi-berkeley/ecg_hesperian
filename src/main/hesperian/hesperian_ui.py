@@ -4,7 +4,7 @@ Similar to a regular UserAgent, but it uses a HesperianSpecializer instead.
 """
 
 from nluas.language.user_agent import *
-from starcraft.hesperian_specializer import *
+from hesperian_specializer import *
 import sys
 import subprocess
 
@@ -22,4 +22,3 @@ class HesperianUserAgent(UserAgent):
 
 if __name__ == "__main__":
     ui = HesperianUserAgent(sys.argv[1:])
-    ui.prompt()

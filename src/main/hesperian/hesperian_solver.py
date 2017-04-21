@@ -25,24 +25,55 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         self._recent = None
         self._wh = None
         self._terminate = False
+        self._wiki_knowledge = {
+            "malaria": {"fever": "Oh no! you have a fever from malaria", "default": "oh no you have malaria!"},
+            "pain": {"abdomen": "ouch you have abdomen pain", "default": "oh no something hurts"},
+            "fever": {"default": "oh no you have a fever!"},
+            "default": "you good!"
+        }
 
+    def solve(self, ntuple):
+        if self.check_for_clarification(ntuple):
+            self.request_clarification(ntuple=ntuple)
+        else:
+            self.ntuple = ntuple
+            predicate_type = 'unstructured'
+            if 'predicate_type' in ntuple:
+                predicate_type = ntuple['predicate_type']
+            try:
+                dispatch = getattr(self, "solve_%s" %predicate_type)
+                dispatch(ntuple)
+                self.broadcast()
+                self.p_features = None # Testing, took it out from route_action
+            except AttributeError as e:
+                traceback.print_exc()
+                message = "I cannot solve a(n) {}.".format(predicate_type)
+                self.identification_failure(message)
 
-    def send_and_receive(self, message, timeout=5):
-        """
-        Sends message to the adapter and waits for a response
-        """
-        send_time = time.time()
-        self._response = None
-        self.transport.send(self.adapter_address, json.dumps(message))
-        print("sent: ", message)
+    def solve_unstructured(self, ntuple):
+        if ntuple['schema'] == 'Symptom':
+            self.solve_symptom(ntuple)
 
-        while time.time() - send_time <= timeout:
-            if self._response:
-                print("received: ", self._response)
-                if self._response["status"] == "success" or 'remaining' in self._response:
-                    return self._response
-                raise RuntimeWarning("Could not complete: " + str(message))
-        raise RuntimeError("Command timed out: " + str(message))
+    def solve_symptom(self, ntuple):
+        args = []
+        if "givenness" in ntuple['disease']['objectDescriptor']:
+            args.append(ntuple['disease']['objectDescriptor']['type'])
+        if "givenness" in ntuple['symptom']['objectDescriptor']:
+            args.append(ntuple['symptom']['objectDescriptor']['type'])
+        if "givenness" in ntuple['experiencer']['objectDescriptor']:
+            args.append(ntuple['experiencer']['objectDescriptor']['type'])
+        if "givenness" in ntuple['location']['objectDescriptor']:
+            args.append(ntuple['location']['objectDescriptor']['type'])
+
+        response = self._wiki_knowledge
+        for arg in args:
+            response = response[arg]
+
+        if isinstance(response, dict):
+            response = response["default"]
+
+        print(response)
+
 
     def solve_serial(self, parameters, predicate):
         """

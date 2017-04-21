@@ -201,6 +201,24 @@
             "p_features": {
                 "descriptor": "processFeatures"
             }
+        },
+        "Symptom": {
+            "experiencer": {
+                "descriptor": "objectDescriptor"
+            },
+            "symptom": {
+                "descriptor": "objectDescriptor"
+            },
+            "disease": {
+                "descriptor": "objectDescriptor"
+            },
+            "location": {
+                "descriptor": "objectDescriptor"
+            },
+            "actionary": "actionary",
+            "p_features": {
+                "descriptor": "processFeatures"
+            }
         }
     }
 }

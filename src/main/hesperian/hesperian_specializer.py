@@ -2,7 +2,6 @@
 Author: vivekraghuram <vivek.raghuram@berkeley.edu>
 """
 
-from IPython import embed
 from nluas.language.core_specializer import *
 import os
 
@@ -29,3 +28,11 @@ class HesperianSpecializer(CoreSpecializer):
             os.path.join(dir_name, "descriptors.json"))
         self.event_templates = self.read_templates(
             os.path.join(dir_name, "event_templates.json"))
+
+    def specialize_fragment(self, fs):
+        if not hasattr(fs, "m") or fs.m == "None":
+            return None
+        elif self.analyzer.issubtype("SCHEMA", fs.m.type(), "Symptom"):
+            return self.fill_parameters(fs.m)
+        else:
+            return CoreSpecializer.specialize_fragment(self, fs)
