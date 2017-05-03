@@ -15,5 +15,4 @@ class HesperianTextAgent(TextAgent):
 
 if __name__ == "__main__":
 	text = HesperianTextAgent(sys.argv[1:])
-	while True:
-		text.prompt()
+	text.keep_alive(text.prompt)
