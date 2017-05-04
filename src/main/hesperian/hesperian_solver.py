@@ -9,7 +9,6 @@ Thus: query_move, command_move, etc.
 Or: query_be, command_be, etc.
 
 """
-
 from nluas.app.core_solver import *
 from nluas.utils import *
 import sys
@@ -18,6 +17,7 @@ from functools import wraps
 from nluas.Transport import Transport
 import json
 import time
+import webbrowser
 
 class BasicHesperianProblemSolver(CoreProblemSolver):
     def __init__(self, args):
@@ -25,12 +25,6 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         self._recent = None
         self._wh = None
         self._terminate = False
-        self._wiki_knowledge = {
-            "malaria": {"fever": "Oh no! you have a fever from malaria", "default": "oh no you have malaria!"},
-            "pain": {"abdomen": "ouch you have abdomen pain", "default": "oh no something hurts"},
-            "fever": {"default": "oh no you have a fever!"},
-            "default": "you good!"
-        }
 
     def solve(self, ntuple):
         if self.check_for_clarification(ntuple):
@@ -55,25 +49,9 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
             self.solve_symptom(ntuple)
 
     def solve_symptom(self, ntuple):
+        print(ntuple)
         args = []
-        if "givenness" in ntuple['disease']['objectDescriptor']:
-            args.append(ntuple['disease']['objectDescriptor']['type'])
-        if "givenness" in ntuple['symptom']['objectDescriptor']:
-            args.append(ntuple['symptom']['objectDescriptor']['type'])
-        if "givenness" in ntuple['experiencer']['objectDescriptor']:
-            args.append(ntuple['experiencer']['objectDescriptor']['type'])
-        if "givenness" in ntuple['location']['objectDescriptor']:
-            args.append(ntuple['location']['objectDescriptor']['type'])
-
-        response = self._wiki_knowledge
-        for arg in args:
-            response = response[arg]
-
-        if isinstance(response, dict):
-            response = response["default"]
-
-        print(response)
-
+        self.generate_url(args)
 
     def solve_serial(self, parameters, predicate):
         """
@@ -89,6 +67,16 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         parameters = ntuple['eventDescriptor']
         self.route_event(parameters, "command")
 
+    def generate_url(self, args):
+        url = "http://hesperian.org/"
+        if args:
+            url += "?s="
+            for arg in args:
+                url += "+" + arg
+        self.open_url(url)
+
+    def open_url(self, url):
+        webbrowser.open(url)
 
 if __name__ == "__main__":
     solver = BasicHesperianProblemSolver(sys.argv[1:])
