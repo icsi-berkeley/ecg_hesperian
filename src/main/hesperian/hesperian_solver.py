@@ -45,12 +45,21 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
                 self.identification_failure(message)
 
     def solve_unstructured(self, ntuple):
-        if ntuple['schema'] == 'Symptom':
-            self.solve_symptom(ntuple)
+        if 'schema' in ntuple:
+            if ntuple['schema'] == 'Symptom':
+                self.solve_symptom(ntuple)
+        else:
+            self.solve_basic(ntuple)
 
     def solve_symptom(self, ntuple):
         print(ntuple)
         args = []
+        self.generate_url(args)
+
+    def solve_basic(self, ntuple):
+        print(ntuple)
+        args = []
+        args.append(ntuple['type'])
         self.generate_url(args)
 
     def solve_serial(self, parameters, predicate):
