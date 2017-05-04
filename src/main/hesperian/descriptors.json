@@ -23,6 +23,27 @@
             "MetaphoricalScalarModification": {"property": "value"}
         }
     },
+    "symptomDescriptor": {
+        "parents": ["objectDescriptor"],
+        "location": {"descriptor": "objectDescriptor"},
+        "duration": "duration",
+        "experiencer": {"descriptor": "patientDescriptor"},
+        "disease": {"descriptor": "diseaseDescriptor"}
+    },
+    "treatmentDescriptor": {
+        "user": {"descriptor": "patientDescriptor"},
+        "drug": {"descriptor": "objectDescriptor"}
+    },
+    "diseaseDescriptor": {
+        "parents": ["objectDescriptor"],
+        "location": {"descriptor": "objectDescriptor"},
+        "cause": {"descriptor": "objectDescriptor"}
+    },
+    "patientDescriptor": {
+        "parents": ["objectDescriptor"],
+        "name": null,
+        "age": "age"
+    },
     "RDExtras": {
         "specificWh": "specificWh",
         "event": {"eventDescription": "event"},
