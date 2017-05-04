@@ -72,7 +72,8 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         if args:
             url += "?s="
             for arg in args:
-                url += "+" + arg
+                url += arg + "+"
+            url = url[:-1] #remove trailing '+'
         self.open_url(url)
 
     def open_url(self, url):
