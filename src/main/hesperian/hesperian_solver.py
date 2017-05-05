@@ -61,6 +61,8 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         #print(ntuple['location'])
         if ntuple['location']['objectDescriptor']['type'] != 'bodyPart':
             args.append(ntuple['location']['objectDescriptor']['type'])
+        if ntuple['disease']['objectDescriptor']['type'] != 'disease':
+            args.append(ntuple['disease']['objectDescriptor']['type'])
         self.generate_url(args)
 
     def solve_disease(self, ntuple):
@@ -75,10 +77,18 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         args.append(ntuple['type'])
         self.generate_url(args)
 
-    def solve_modal(self, ntuple):
+    def solve_query(self, ntuple):
+        print("solve_query")
         args = []
-        args.append(ntuple['type'])
+        args.append(ntuple['eventDescriptor']['eventProcess']['possessed']['objectDescriptor']['type'])
+        args.append(ntuple['eventDescriptor']['eventProcess']['possessed']['objectDescriptor']['possessor']['objectDescriptor']['gender'])
         self.generate_url(args)
+
+    # def solve_modal(self, ntuple):
+    #     print("solve_modal")
+    #     args = []
+    #     args.append(ntuple['type'])
+    #     self.generate_url(args)
 
     def generate_url(self, args):
         url = "http://hesperian.org/"
