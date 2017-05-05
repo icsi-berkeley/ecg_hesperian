@@ -27,11 +27,11 @@
         "parents": ["objectDescriptor"],
         "location": {"descriptor": "objectDescriptor"},
         "duration": "duration",
-        "experiencer": {"descriptor": "patientDescriptor"},
-        "disease": {"descriptor": "diseaseDescriptor"}
+        "experiencer": {"descriptor": "objectDescriptor"},
+        "disease": {"descriptor": "objectDescriptor"}
     },
     "treatmentDescriptor": {
-        "user": {"descriptor": "patientDescriptor"},
+        "user": {"descriptor": "objectDescriptor"},
         "drug": {"descriptor": "objectDescriptor"}
     },
     "diseaseDescriptor": {
