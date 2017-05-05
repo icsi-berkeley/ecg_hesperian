@@ -81,7 +81,8 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         print("solve_query")
         args = []
         args.append(ntuple['eventDescriptor']['eventProcess']['possessed']['objectDescriptor']['type'])
-        args.append(ntuple['eventDescriptor']['eventProcess']['possessed']['objectDescriptor']['possessor']['objectDescriptor']['gender'])
+        #args.append(ntuple['eventDescriptor']['eventProcess']['possessed']['objectDescriptor']['possessor']['objectDescriptor']['gender'])
+        args.append("symptom") #temp
         self.generate_url(args)
 
     # def solve_modal(self, ntuple):
