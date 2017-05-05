@@ -27,6 +27,7 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         self._terminate = False
 
     def solve(self, ntuple):
+        print(ntuple)
         if self.check_for_clarification(ntuple):
             self.request_clarification(ntuple=ntuple)
         else:
@@ -45,19 +46,22 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
                 self.identification_failure(message)
 
     def solve_unstructured(self, ntuple):
-        if 'schema' in ntuple:
-            if ntuple['schema'] == 'Symptom':
+        print("solve_unstrctured")
+        if ntuple['descriptorType'] == 'symptomDescriptor':
                 self.solve_symptom(ntuple)
         else:
             self.solve_basic(ntuple)
 
     def solve_symptom(self, ntuple):
-        print(ntuple)
+        print("solve_symptom")
         args = []
+        args.append(ntuple['type'])
+        #print(ntuple['location'])
+        args.append(ntuple['location']['objectDescriptor']['type'])
         self.generate_url(args)
 
     def solve_basic(self, ntuple):
-        print(ntuple)
+        print("solve_basic")
         args = []
         args.append(ntuple['type'])
         self.generate_url(args)
