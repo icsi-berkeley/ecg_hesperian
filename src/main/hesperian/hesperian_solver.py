@@ -49,6 +49,8 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         print("solve_unstrctured")
         if ntuple['descriptorType'] == 'symptomDescriptor':
                 self.solve_symptom(ntuple)
+        elif ntuple['descriptorType'] == 'diseaseDescriptor':
+                self.solve_disease(ntuple)
         else:
             self.solve_basic(ntuple)
 
@@ -57,7 +59,14 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         args = []
         args.append(ntuple['type'])
         #print(ntuple['location'])
-        args.append(ntuple['location']['objectDescriptor']['type'])
+        if ntuple['location']['objectDescriptor']['type'] != 'bodyPart':
+            args.append(ntuple['location']['objectDescriptor']['type'])
+        self.generate_url(args)
+
+    def solve_disease(self, ntuple):
+        print("solve_disease")
+        args = []
+        args.append(ntuple['type'])
         self.generate_url(args)
 
     def solve_basic(self, ntuple):
@@ -66,19 +75,10 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         args.append(ntuple['type'])
         self.generate_url(args)
 
-    def solve_serial(self, parameters, predicate):
-        """
-        Solves a serial event
-        """
-        self.route_action(parameters['process1'], predicate)
-        self.route_action(parameters['process2'], predicate)
-
-    def solve_command(self, ntuple):
-        """
-        Solves a command
-        """
-        parameters = ntuple['eventDescriptor']
-        self.route_event(parameters, "command")
+    def solve_modal(self, ntuple):
+        args = []
+        args.append(ntuple['type'])
+        self.generate_url(args)
 
     def generate_url(self, args):
         url = "http://hesperian.org/"
