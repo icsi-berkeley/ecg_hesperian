@@ -29,40 +29,6 @@ class HesperianSpecializer(CoreSpecializer):
         self.event_templates = self.read_templates(
             os.path.join(dir_name, "event_templates.json"))
 
-    # def specialize_fragment(self, fs):
-    #     if not hasattr(fs, "m") or fs.m == "None":
-    #         return None
-    #     elif self.analyzer.issubtype("SCHEMA", fs.m.type(), "Symptom"):
-    #         return self.fill_parameters(fs.m)
-    #     else:
-    #         return CoreSpecializer.specialize_fragment(self, fs)
-
-    # def get_objectDescriptor(self, item, resolving=False):
-    #     """ Override to use correct descriptors for symptoms, diseases and drugs """
-    #     if "pointers" not in item.__dir__():
-    #         item.pointers = self.invert_pointers(item)
-    #
-    #     if self.analyzer.issubtype("SCHEMA", item.type(), "Symptom"):
-    #         return self.get_symptomDescriptor(item, resolving)
-    #     elif self.analyzer.issubtype("SCHEMA", item.type(), "Disease"):
-    #         return self.get_diseaseDescriptor(item, resolving)
-    #     elif self.analyzer.issubtype("SCHEMA", item.type(), "Drug"):
-    #         return self.get_treatmentDescriptor(item, resolving)
-    #     else:
-    #         return CoreSpecializer.get_objectDescriptor(item, resolving)
-
-    def get_symptomDescriptor(self, item, resolving=False):
-        return self.get_objectDescriptor(item, resolving)
-
-    def get_diseaseDescriptor(self, item, resolving=False):
-        return self.get_objectDescriptor(item, resolving)
-
-    def get_treatmentDescriptor(self, item, resolving=False):
-        return self.get_objectDescriptor(item, resolving)
-
-    def get_patientDescriptor(self, item, resolving=False):
-        return self.get_objectDescriptor(item, resolving)
-
     def get_objectDescriptor(self, item, resolving=False):
         """ Override to use correct descriptors for symptoms, diseases and drugs """
         returned, template = {}, {}
@@ -119,46 +85,20 @@ class HesperianSpecializer(CoreSpecializer):
 
         return returned
 
+    def compatible_referents(self, pronoun, ref):
+        for key, value in pronoun.items():
+            if key in ref and key != "referent" and key != "descriptorType" and (value and ref[key]):
+                if not self.is_compatible("ONTOLOGY", value, ref[key]):
+                    return False
+        return True
 
-    def fill_value(self, key, value, input_schema):
-        """ Most important specializer method. Takes in a skeleton key,value pairing from a template,
-        as well as the relevant schema ("MotionPath", etc.), and returns the relevant value.
-        If the value is a dictionary, it might be a "descriptor", so it returns an objectDescriptor, etc.
-        A dictionary value could also indicate an embedded process, in which case fill_parameters is called.
-        Also calls specialize_event for embedded EventDescriptors.
-        Otherwise, it gets the filler for the value from the schema ("actionary": @move), and returns this.
-        """
-        final_value = None
-        if isinstance(value, dict):
-            if "method" in value and hasattr(input_schema, key):
-                method = getattr(self, value["method"])
-                return method(input_schema)
-            elif "descriptor" in value:
-                method = getattr(self, "get_{}".format(value["descriptor"]))
-                if hasattr(input_schema, key) and getattr(input_schema, key).has_filler():
-                    attribute = getattr(input_schema, key)
-                    descriptor = {value['descriptor']: method(attribute)}
-                    if value['descriptor'] in ["objectDescriptor", "symptomDescriptor", "diseaseDescriptor", "treatmentDescriptor", "patientDescriptor"]:
-                        self._stacked.append(descriptor)
-                    if key == "protagonist":
-                        self.protagonist = dict(descriptor)
-                    return descriptor
-                if "default" in value:
-                    return value['default']
-                return None
-            elif "parameters" in value and hasattr(input_schema, value['parameters']) and getattr(input_schema, value['parameters']).has_filler():
-                return self.fill_parameters(getattr(input_schema, value['parameters']))
-            elif "eventDescription" in value and hasattr(input_schema, value['eventDescription']) and getattr(input_schema, value['eventDescription']).has_filler():
-                return self.specialize_event(getattr(input_schema, value['eventDescription']))
-        elif value and hasattr(input_schema, key):
-            attribute = getattr(input_schema, key)
-            if attribute.type() in ["scalarValue", "scale"]:
-                return float(attribute)
-            elif key == "negated":
-                return self.get_negated(attribute.type())
-            elif attribute.type() != "None" and attribute.type() != None:
-                return attribute.type()
-            elif attribute.__value__ != "None":
-                return attribute.__value__
-
-        return final_value
+    def resolve_referents(self, item, antecedents = None, actionary=None, pred=None):
+        if antecedents is None:
+            antecedents = self._stacked
+        popper = list(antecedents)
+        while len(popper) > 0:
+            ref = popper.pop()
+            if self.resolves(ref, actionary, pred) and self.compatible_referents(item, ref['objectDescriptor']):
+                ref = self.clean_referent(ref)
+                return {'objectDescriptor': self.merge_descriptors(item, ref['objectDescriptor'])}
+        return {'objectDescriptor': item}
