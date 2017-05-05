@@ -58,7 +58,6 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         print("solve_symptom")
         args = []
         args.append(ntuple['type'])
-        #print(ntuple['location'])
         if ntuple['location']['objectDescriptor']['type'] != 'bodyPart':
             args.append(ntuple['location']['objectDescriptor']['type'])
         if ntuple['disease']['objectDescriptor']['type'] != 'disease':
