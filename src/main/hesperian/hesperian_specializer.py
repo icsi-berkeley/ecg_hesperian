@@ -45,7 +45,7 @@ class HesperianSpecializer(CoreSpecializer):
         elif self.analyzer.issubtype("SCHEMA", item.type(), "Disease"):
             returned["descriptorType"] = "diseaseDescriptor"
             template = self.descriptor_templates['diseaseDescriptor']
-        elif self.analyzer.issubtype("SCHEMA", item.type(), "Drug"):
+        elif self.analyzer.issubtype("SCHEMA", item.type(), "Treatment"):
             returned["descriptorType"] = "treatmentDescriptor"
             template = self.descriptor_templates['treatmentDescriptor']
         else:
@@ -102,3 +102,8 @@ class HesperianSpecializer(CoreSpecializer):
                 ref = self.clean_referent(ref)
                 return {'objectDescriptor': self.merge_descriptors(item, ref['objectDescriptor'])}
         return {'objectDescriptor': item}
+
+    def fill_value(self, key, value, input_schema):
+        if key == "descriptorType":
+            return value
+        return CoreSpecializer.fill_value(self, key, value, input_schema)

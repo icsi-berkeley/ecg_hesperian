@@ -26,13 +26,16 @@
     "symptomDescriptor": {
         "parents": ["objectDescriptor"],
         "location": {"descriptor": "objectDescriptor"},
-        "duration": "duration",
+        "duration": {"descriptor": "objectDescriptor"},
         "experiencer": {"descriptor": "objectDescriptor"},
-        "disease": {"descriptor": "objectDescriptor"}
+        "disease": {"descriptor": "objectDescriptor"},
+        "trigger": {"descriptor": "objectDescriptor"}
     },
     "treatmentDescriptor": {
+        "parents": ["objectDescriptor"],
         "user": {"descriptor": "objectDescriptor"},
-        "drug": {"descriptor": "objectDescriptor"}
+        "drug": {"descriptor": "objectDescriptor"},
+        "procedure": {"descriptor": "objectDescriptor"}
     },
     "diseaseDescriptor": {
         "parents": ["objectDescriptor"],
