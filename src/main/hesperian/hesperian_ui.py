@@ -53,9 +53,9 @@ class HesperianUserAgent(UserAgent):
             if checked != msg:
                 ### DEBUGGING: Print corrected message: ###
                 # print(self.spell_checker.print_modified(table['checked'], table['modified']))
-                self.process_input(checked)
+                return self.process_input(checked)
             else:
-                self.process_input(msg)
+                return self.process_input(msg)
 
 
 if __name__ == "__main__":
