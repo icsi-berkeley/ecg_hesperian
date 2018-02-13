@@ -1,11 +1,12 @@
 """
-Author: seantrott <seantrott@icsi.berkeley.edu>
-Similar to a regular UserAgent, but it uses a HesperianSpecializer instead.
+Author: vivekraghuram <vivek.raghuram@berkeley.edu>
+Similar to a regular UserAgent, but it uses a HesperianSpecializer instead. Includes features for
+spell checking and swapping words for synonyms that have tokens in the analyzer.
 """
 
 from nluas.language.user_agent import *
 from hesperian_specializer import *
-from nluas.language.spell_checker import *
+from hesperian_word_checker import *
 import sys
 import subprocess
 
@@ -14,7 +15,7 @@ class HesperianUserAgent(UserAgent):
 
     def __init__(self, args):
         UserAgent.__init__(self, args)
-        self.spell_checker = SpellChecker(self.analyzer.get_lexicon())
+        self.word_checker = HesperianWordChecker(self.analyzer.get_lexicon())
 
     def initialize_specializer(self):
         self.specializer = HesperianSpecializer(self.analyzer)
@@ -35,28 +36,22 @@ class HesperianUserAgent(UserAgent):
                 self.specializer.set_debug()
                 specialize = False
             elif specialize:
-                new_ntuple = self.check_spelling(ntuple['text'])
+                new_ntuple = self.process_input(ntuple['text'])
                 if new_ntuple and new_ntuple != "null":
                     self.transport.send(self.solve_destination, new_ntuple)
         elif ntuple['type'] == "clarification":
-            descriptor = self.check_spelling(msg)
+            descriptor = self.process_input(msg)
             self.clarification = False
             new_ntuple = self.clarify_ntuple(ntuple['original'], descriptor)
             self.transport.send(self.solve_destination, new_ntuple)
             self.clarification = False
 
 
-    def check_spelling(self, msg):
-        table = self.spell_checker.spell_check(msg)
-        if table:
-            checked =self.spell_checker.join_checked(table['checked'])
-            if checked != msg:
-                ### DEBUGGING: Print corrected message: ###
-                # print(self.spell_checker.print_modified(table['checked'], table['modified']))
-                return self.process_input(checked)
-            else:
-                return self.process_input(msg)
-
+    def process_input(self, msg):
+      table = self.word_checker.check(msg)
+      if table:
+        msg = self.word_checker.join_checked(table['checked'])
+      return super(HesperianUserAgent, self).process_input(msg)
 
 if __name__ == "__main__":
     ui = HesperianUserAgent(sys.argv[1:])
