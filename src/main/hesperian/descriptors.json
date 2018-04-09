@@ -47,6 +47,10 @@
         "name": null,
         "age": "age"
     },
+    "bodyPartDescriptor": {
+      "parents": ["objectDescriptor"],
+      "position": {"descriptor": "locationDescriptor"}
+    },
     "RDExtras": {
         "specificWh": "specificWh",
         "event": {"eventDescription": "event"},

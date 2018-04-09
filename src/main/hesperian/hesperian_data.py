@@ -28,7 +28,7 @@ class User(object):
     self.data['updated_at'] = int(time.time())
 
 class HesperianData(object):
-  def __init__():
+  def __init__(self):
     self.sid_to_uid = {}
     self.users = {}
     self.expired_uids = []
@@ -38,12 +38,12 @@ class HesperianData(object):
     """
     Creates a user object, creates an sid and uid, and maps the sid to the uid
     """
-    sid = uuid.uuid4()
-    uid = uuid.uuid4()
+    sid = "#{}".format(uuid.uuid4()) # the public facing session ID
+    uid = "#{}".format(uuid.uuid4()) # the private user ID
     user = User(uid)
 
     self.users[uid] = user
-    self.sid_to_uid[sid] = (uid, int(time.time()))
+    self.sid_to_uid[sid] = [uid, int(time.time())]
     return sid
 
   def delete_user(self, sid):
@@ -78,7 +78,7 @@ class HesperianData(object):
 
   def get_data(self, sid, key):
     uid = self._get_uid(sid)
-    if uid != None and value != None:
+    if uid != None:
       return self._get_user(uid).get(key)
     return None
 

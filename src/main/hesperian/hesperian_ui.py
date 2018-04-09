@@ -23,6 +23,19 @@ class HesperianUserAgent(UserAgent):
     def output_stream(self, tag, message):
         print("{}: {}".format(tag, message))
 
+    def callback(self, ntuple):
+        """ Process information from ProblemSolver """
+        msg = ntuple['text']
+        if self.is_quit(ntuple):
+            self.close()
+        elif msg != None and msg != "":
+            new_ntuple = self.process_input(msg)
+            if new_ntuple and new_ntuple != "null":
+                new_ntuple['original_query'] = msg
+                new_ntuple['sid'] = ntuple['sid']
+                self.transport.send(self.solve_destination, new_ntuple)
+        # super(HesperianUserAgent, self).callback(ntuple)
+
     def text_callback(self, ntuple):
         """ Processes text from a SpeechAgent. """
         specialize = True
