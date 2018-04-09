@@ -48,6 +48,12 @@ class HesperianSpecializer(CoreSpecializer):
         elif self.analyzer.issubtype("SCHEMA", item.type(), "Treatment"):
             returned["descriptorType"] = "treatmentDescriptor"
             template = self.descriptor_templates['treatmentDescriptor']
+        elif self.analyzer.issubtype("SCHEMA", item.type(), "Patient"):
+            returned["descriptorType"] = "patientDescriptor"
+            template = self.descriptor_templates['patientDescriptor']
+        elif self.analyzer.issubtype("SCHEMA", item.type(), "BodyPart"):
+            returned["descriptorType"] = "bodyPartDescriptor"
+            template = self.descriptor_templates['bodyPartDescriptor']
         else:
             returned["descriptorType"] = "objectDescriptor"
             template = self.descriptor_templates['objectDescriptor']
