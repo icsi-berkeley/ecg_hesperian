@@ -1,0 +1,141 @@
+#bodyContent.ecgsearch {
+  padding-top: 0px;
+  margin-top: -30px;
+}
+
+#resultboxecg {
+  box-sizing: border-box;
+
+  transition-property: height;
+  transition-duration: 0.5s;
+
+  width: 680px;
+  height: auto;
+  margin: 10px auto;
+  padding: 5px;
+
+  border: 1px solid #c8ccd1;
+  background-color: #f8f9fa;
+
+  text-align: center;
+}
+
+#resultboxecg .gsc-control-cse {
+  background-color: transparent;
+  border: initial;
+}
+
+#resultboxecg .gsc-control-cse .gsc-webResult.gsc-result {
+  background-color: transparent;
+  border: initial;
+}
+
+#resultboxgoogle-std .gsc-control-cse .gsc-wrapper .gsc-adBlock {
+  display: none;
+  /* I doubt google appreciates this but it is okay as long as this doesn't go into production.
+     Also, hesperian has nonprofit google custom search so ads won't appear at all. */
+}
+
+.clarification-question {
+  box-sizing: border-box;
+
+  width: 670px;
+  height:auto;
+  padding: 10px 21px 10px;
+  margin: 0px auto;
+
+  border-bottom: 1px solid #999;
+  text-align: left;
+}
+
+.clarification-question p {
+  font-style: italic;
+
+  margin-bottom: 0px;
+  padding-bottom: 0px;
+}
+
+.clarification-question h4 {
+  margin-top: 0px;
+  padding-top: 0px;
+}
+
+.clarification-question #clarify-button {
+  box-sizing: border-box;
+
+  width: 100px;
+  padding: 0.625em 0.9375em 0.546875em;
+  margin-top: 5px;
+  line-height: 1;
+  border-radius: 2px;
+  min-height: 2.3em;
+
+  color: #fff;
+
+  transition-property: background-color, color, border-color, box-shadow;
+  transition-duration: 100ms, 100ms, 100ms, 100ms;
+  transition-timing-function: ease, ease, ease, ease;
+  transition-delay: 0s, 0s, 0s, 0s;
+
+  font-weight: bold;
+  text-align: center;
+}
+
+.clarification-question #clarify-button.disabled {
+  color: #666;
+  background-color: #ddd;
+}
+
+.clarification-question #clarify-button.enabled {
+  background-color: #36c;
+  cursor: pointer;
+}
+
+.clarification-question #clarify-button.enabled:hover {
+  background-color: #447ff5;
+}
+
+.clarification-question input[type="radio"] {
+  margin-top: -1px;
+  vertical-align: middle;
+}
+
+
+/* Spinner */
+.loading-icon {
+  display: inline-block;
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+.loading-icon div {
+  display: inline-block;
+  position: absolute;
+  left: 6px;
+  width: 13px;
+  background: #bbb;
+  animation: loading-icon 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
+}
+.loading-icon div:nth-child(1) {
+  left: 6px;
+  animation-delay: -0.24s;
+}
+.loading-icon div:nth-child(2) {
+  left: 26px;
+  animation-delay: -0.12s;
+}
+.loading-icon div:nth-child(3) {
+  left: 45px;
+  animation-delay: 0;
+}
+
+@keyframes loading-icon {
+  0% {
+    top: 6px;
+    height: 51px;
+  }
+  50%, 100% {
+    top: 19px;
+    height: 26px;
+  }
+}

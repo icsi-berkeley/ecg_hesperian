@@ -1,0 +1,41 @@
+{
+  "name": "ECGSearchInterface",
+  "version": "1.0",
+  "author": "Vivek Raghuram",
+  "descriptionmsg": "ECGSearchInterface-desc",
+  "type": "specialpage",
+  "MessagesDirs": {
+    "ECGSearchInterface": [
+      "i18n"
+    ]
+  },
+  "AutoloadClasses": {
+    "ECGSearchInterfaceHooks": "ECGSearchInterface.hooks.php",
+    "ECGSearchInterfaceAPI": "ECGSearchInterface.api.php"
+  },
+  "APIModules": {
+    "ECGSearchInterfaceAPI": "ECGSearchInterfaceAPI"
+  },
+  "Hooks": {
+    "SpecialSearchResultsPrepend": "ECGSearchInterfaceHooks::searchPrepend"
+  },
+  "ResourceModules": {
+    "ECGSearchInterfaceModule": {
+      "scripts": ["ECGSearchInterface.js"],
+      "styles": ["ECGSearchInterface.css"]
+    }
+  },
+  "ResourceFileModulePaths": {
+		"localBasePath": "",
+		"remoteExtPath": "ECGSearchInterface"
+	},
+  "config": {
+    "TransportAddr": "172.16.10.1",
+    "TransportPort": 7417,
+    "TransportName": "Wiki"
+  },
+  "requires": {
+    "MediaWiki": ">= 1.26.0"
+  },
+  "manifest_version": 1
+}

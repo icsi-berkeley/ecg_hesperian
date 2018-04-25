@@ -1,0 +1,22 @@
+{
+  "templates": {
+    "clarify_gender": {
+      "condition": {
+        "gender": null
+      },
+      "field": "gender",
+      "type": "MC",
+      "text": "What is the gender of the patient?",
+      "options": "Male|Female"
+    },
+    "clarify_age": {
+      "condition": {
+        "age": null
+      },
+      "field": "age",
+      "type": "MC",
+      "text": "How old is the patient?",
+      "options": "Infant|Child|Adolescent|Adult|Elderly"
+    }
+  }
+}

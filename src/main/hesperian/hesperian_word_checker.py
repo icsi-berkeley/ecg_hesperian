@@ -45,18 +45,29 @@ class HesperianWordChecker(object):
     split = sentence.translate(self.translate_table).split()
     checked = []
     modified = []
-    for word in split:
-      checked_word, is_modified = self.check_word(word)
+    for i in range(len(split)):
+      checked_word, is_modified = self.check_word(i, split)
       checked.append(checked_word)
       modified.append(is_modified)
     return {'checked': checked, 'modified': modified}
 
 
-  def check_word(self, word):
+  def check_word(self, i, words):
+    word = words[i]
     if self.lexicon.check(word):
+      return word, False
+    if i+1 < len(words) and self.lexicon.check("{}_{}".format(word, words[i+1])):
+      return word, False
+    if i-1 >= 0 and self.lexicon.check("{}_{}".format(words[i-1], word)):
       return word, False
     if self.general.check(word) and word in self.synonym_map:
       return self.synonym_map[word], True
+
+    try:
+      int(word)
+      return word, False
+    except:
+      pass
 
     lexicon_suggestions = self.lexicon.suggest(word)
     if len(lexicon_suggestions) > 0:
