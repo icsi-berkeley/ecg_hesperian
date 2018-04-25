@@ -8,23 +8,81 @@ See LICENSE.txt for licensing information.
 
 import enchant
 import string
+import os
+import re
+import nltk
+from nltk.corpus import wordnet
+from nltk.stem import WordNetLemmatizer
 from nluas.language.spell_checker import Color
-from IPython import embed
+from itertools import chain
+
+# mapping between NLTK POS tags and celex morphology types
+TAG_DICT = {'JJ':'Positive', 'JJR':'Comparative', 'JJS':'Superlative',
+  'NN':'Singular', 'NNS':'Plural', 'NNP':'Singular', 'NNPS':'Plural',
+  'RB':'Positive', 'RBR':'Comparative', 'RBS':'Superlative',
+  'VB':'Infinitive', 'VBD':'FirstPersonPastTenseSingular',
+  'VBG':'ParticiplePresentTense', 'VBN':'ParticiplePastTense',
+  'VBP':'FirstPersonPresentTenseSingular', 'VBZ':'PresentTenseSingularThirdPerson'}
 
 class HesperianWordChecker(object):
 
-  def __init__(self, lexicon):
+  def __init__(self, prefs_path, lexicon):
     self.general = enchant.Dict("en_US")
+
+    self.morph_files = []
+    self.token_files = []
+    self.read_prefs(prefs_path)
+
+    self.tokens_in_grammar = set()
+    self.read_tokens()
+
+    self.lemma_to_word = dict()
+    self.read_morphs()
 
     self.lexicon = enchant.pypwl.PyPWL()
     self.load_lexicon(lexicon)
 
-    self.synonym_map = self.load_synonyms()
+  def read_prefs(self, prefs_path):
+    """
+      Reads a prefs file and gets the morphology files and token files.
+    """
+    prefs_folder = "/".join(prefs_path.split("/")[0:-1])
+    reading_morphs, reading_tokens = False, False
+    with open(prefs_path) as f:
+      for line in f:
+        line = line.strip()
+        if "MORPHOLOGY_PATH ::==" in line:
+          reading_morphs = True
+        elif "TOKEN_PATH ::==" in line:
+          reading_tokens = True
+        elif ";" in line:
+          reading_morphs, reading_tokens = False, False
+        elif reading_morphs == True:
+          self.morph_files.append(os.path.join(prefs_folder, line))
+        elif reading_tokens == True:
+          self.token_files.append(os.path.join(prefs_folder, line))
 
-    self.translate_table = dict()
+        if reading_morphs and reading_tokens:
+          raise Error("Invalid file")
 
-    for i in string.punctuation:
-      self.translate_table[ord(i)] = " " + i + " "
+  def read_tokens(self):
+    for token_file in self.token_files:
+      with open(token_file) as f:
+        for line in f:
+          self.tokens_in_grammar.add(line.split('::')[0].strip())
+
+  def read_morphs(self):
+    for morph_file in self.morph_files:
+      with open(morph_file) as f:
+        for line in f:
+          morph = line.split()
+          word = morph[0]
+          for lemma, tense in zip(morph[1::2], morph[2::2]):
+            tense_key = ''.join(sorted(re.split('/|,', tense)))
+            if lemma in self.lemma_to_word:
+              self.lemma_to_word[lemma][tense_key] = word
+            else:
+              self.lemma_to_word[lemma] = {tense_key : word}
 
 
   def load_lexicon(self, lexicon):
@@ -32,36 +90,30 @@ class HesperianWordChecker(object):
       self.lexicon.add(word)
 
 
-  def load_synonyms(self):
-    """
-      Loads data structure/file of synonyms. Looks for occurences of tokens and creates a map
-      from all synonyms of that token to the token.
-    """
-    # TODO: implement this
-    return {"crate": "box"}
-
-
   def check(self, sentence):
-    split = sentence.translate(self.translate_table).split()
-    checked = []
-    modified = []
-    for i in range(len(split)):
-      checked_word, is_modified = self.check_word(i, split)
+    tagged_words = nltk.pos_tag(nltk.word_tokenize(sentence))
+    checked, modified = [], []
+    for i in range(len(tagged_words)):
+      checked_word, is_modified = self.check_word(i, tagged_words)
+      if is_modified is None:
+        print("We should use this opportunity to ask for clarification: {}".format(checked_word))
       checked.append(checked_word)
       modified.append(is_modified)
     return {'checked': checked, 'modified': modified}
 
 
-  def check_word(self, i, words):
-    word = words[i]
-    if self.lexicon.check(word):
+  def check_word(self, i, tagged_words):
+    word, pos_tag = tagged_words[i]
+    if self.lexicon.check(word) or word in string.punctuation:
       return word, False
-    if i+1 < len(words) and self.lexicon.check("{}_{}".format(word, words[i+1])):
+    if i+1 < len(tagged_words) and self.lexicon.check("{}_{}".format(word, tagged_words[i+1][0])):
       return word, False
-    if i-1 >= 0 and self.lexicon.check("{}_{}".format(words[i-1], word)):
+    if i-1 >= 0 and self.lexicon.check("{}_{}".format(tagged_words[i-1][0], word)):
       return word, False
-    if self.general.check(word) and word in self.synonym_map:
-      return self.synonym_map[word], True
+    if self.general.check(word):
+      synonym = self.get_synonym(word, pos_tag)
+      if synonym:
+        return synonym, True
 
     try:
       int(word)
@@ -76,10 +128,55 @@ class HesperianWordChecker(object):
     general_suggestions = self.general.suggest(word)
     if len(general_suggestions) > 0:
       for suggestion in general_suggestions:
-        if suggestion in self.synonym_map:
-          return self.synonym_map[suggestion], True
+        synonym = self.get_synonym(suggestion, pos_tag)
+        if synonym:
+          return synonym, True
 
-    return False
+    if self.general.check(word):
+      synonym = self.get_synonym(word, None)
+      if synonym:
+        return synonym, True
+
+    return word, None
+
+  def get_synonym(self, word, pos_tag):
+    if pos_tag:
+      tense = TAG_DICT[pos_tag] if pos_tag in TAG_DICT else 'NoMorphology'
+      pos = self.penn_to_wn(pos_tag)
+
+      if pos is None:
+        return None
+
+      wnl = WordNetLemmatizer()
+      # # https://stackoverflow.com/questions/19258652/how-to-get-synonyms-from-nltk-wordnet-python
+      lemma = wnl.lemmatize(word, pos=pos)
+    else:
+      lemma = word
+
+    synonym_synsets = wordnet.synsets(lemma)
+    synonyms = set(chain.from_iterable([s.lemma_names() for s in synonym_synsets]))
+
+    valid = []
+    for synonym in synonyms:
+      if synonym in self.tokens_in_grammar:
+        if tense in self.lemma_to_word[synonym]:
+          if self.lexicon.check(self.lemma_to_word[synonym][tense]):
+               valid.append(self.lemma_to_word[synonym][tense])
+    return valid[0] if len(valid) > 0 else None
+
+  # Source: https://stackoverflow.com/questions/27591621/nltk-convert-tokenized-sentence-to-synset-format
+  def penn_to_wn(self, tag):
+    if not tag:
+      return None
+    elif tag.startswith('J'):
+      return wordnet.ADJ
+    elif tag.startswith('N'):
+      return wordnet.NOUN
+    elif tag.startswith('R'):
+      return wordnet.ADV
+    elif tag.startswith('V'):
+      return wordnet.VERB
+    return None
 
   def join_checked(self, checked):
     corrected = ""

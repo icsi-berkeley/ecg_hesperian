@@ -13,9 +13,10 @@ import subprocess
 
 class HesperianUserAgent(UserAgent):
 
-    def __init__(self, args):
+    def __init__(self, prefs_path, args):
         UserAgent.__init__(self, args)
-        self.word_checker = HesperianWordChecker(self.analyzer.get_lexicon())
+        self.word_checker = HesperianWordChecker(prefs_path, self.analyzer.get_lexicon())
+        print("User agent ready")
 
     def initialize_specializer(self):
         self.specializer = HesperianSpecializer(self.analyzer)
@@ -88,4 +89,4 @@ class HesperianUserAgent(UserAgent):
             print(e)
 
 if __name__ == "__main__":
-    ui = HesperianUserAgent(sys.argv[1:])
+    ui = HesperianUserAgent(sys.argv[1], sys.argv[2:])
