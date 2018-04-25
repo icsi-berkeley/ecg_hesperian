@@ -61,10 +61,31 @@ class HesperianUserAgent(UserAgent):
 
 
     def process_input(self, msg):
-      table = self.word_checker.check(msg)
-      if table:
-        msg = self.word_checker.join_checked(table['checked'])
-      return super(HesperianUserAgent, self).process_input(msg)
+        table = self.word_checker.check(msg)
+        if table:
+          msg = self.word_checker.join_checked(table['checked'])
+        print(msg)
+        try:
+            full_parse = self.analyzer.full_parse(msg)
+            semspecs = full_parse['parse']
+            spans = full_parse['spans']
+            index = 0
+            for fs in semspecs:
+                try:
+                    span = spans[index]
+                    matched = self.match_spans(span, msg)
+                    self.specializer.set_spans(matched)
+                    ntuple = self.specializer.specialize(fs)
+                    return ntuple
+                except Exception as e:
+                    traceback.print_exc()
+                    self.output_stream(self.name, e)
+                    index += 1
+            if len(semspecs) == 0:
+              raise Exception('No valid semspecs')
+            raise Exception('Unable to specialize any semspecs')
+        except Exception as e:
+            print(e)
 
 if __name__ == "__main__":
     ui = HesperianUserAgent(sys.argv[1:])

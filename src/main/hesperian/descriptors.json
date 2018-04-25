@@ -23,33 +23,41 @@
             "MetaphoricalScalarModification": {"property": "value"}
         }
     },
-    "symptomDescriptor": {
+    "conditionDescriptor": {
         "parents": ["objectDescriptor"],
         "location": {"descriptor": "objectDescriptor"},
         "duration": {"descriptor": "objectDescriptor"},
-        "experiencer": {"descriptor": "objectDescriptor"},
-        "disease": {"descriptor": "objectDescriptor"},
+        "patient": {"descriptor": "objectDescriptor"},
         "trigger": {"descriptor": "objectDescriptor"}
+    },
+    "symptomDescriptor": {
+        "parents": ["conditionDescriptor"],
+        "disease": {"descriptor": "objectDescriptor"}
     },
     "treatmentDescriptor": {
         "parents": ["objectDescriptor"],
-        "user": {"descriptor": "objectDescriptor"},
+        "patient": {"descriptor": "objectDescriptor"},
         "drug": {"descriptor": "objectDescriptor"},
-        "procedure": {"descriptor": "objectDescriptor"}
+        "location": {"descriptor": "objectDescriptor"},
+        "condition": {"descriptor": "objectDescriptor"}
     },
     "diseaseDescriptor": {
-        "parents": ["objectDescriptor"],
-        "location": {"descriptor": "objectDescriptor"},
-        "cause": {"descriptor": "objectDescriptor"}
+        "parents": ["conditionDescriptor"],
+        "symptom": {"descriptor": "objectDescriptor"}
     },
     "patientDescriptor": {
         "parents": ["objectDescriptor"],
         "name": null,
-        "age": "age"
+        "age": "age",
+        "numericalAge": null
     },
     "bodyPartDescriptor": {
       "parents": ["objectDescriptor"],
       "position": {"descriptor": "locationDescriptor"}
+    },
+    "hesperianBagDescriptor": {
+      "this": {"descriptor": "objectDescriptor"},
+      "next": {"descriptor": "hesperianBagDescriptor"}
     },
     "RDExtras": {
         "specificWh": "specificWh",

@@ -29,6 +29,15 @@ class HesperianSpecializer(CoreSpecializer):
         self.event_templates = self.read_templates(
             os.path.join(dir_name, "event_templates.json"))
 
+    def specialize_fragment(self, fs):
+        """ Specializes a sentence fragment, e.g. 'the red one' or a non-discourse-utterance. """
+        if not hasattr(fs, "m") or fs.m == "None":
+            return None
+        elif self.analyzer.issubtype("SCHEMA", fs.m.type(), "HesperianBagSchema"):
+            return self.get_hesperianBagDescriptor(fs.m)
+        else:
+            return super(HesperianSpecializer, self).specialize_fragment(fs)
+
     def get_objectDescriptor(self, item, resolving=False):
         """ Override to use correct descriptors for symptoms, diseases and drugs """
         returned, template = {}, {}
@@ -45,15 +54,15 @@ class HesperianSpecializer(CoreSpecializer):
         elif self.analyzer.issubtype("SCHEMA", item.type(), "Disease"):
             returned["descriptorType"] = "diseaseDescriptor"
             template = self.descriptor_templates['diseaseDescriptor']
+        elif self.analyzer.issubtype("SCHEMA", item.type(), "Condition"):
+            returned["descriptorType"] = "conditionDescriptor"
+            template = self.descriptor_templates['conditionDescriptor']
         elif self.analyzer.issubtype("SCHEMA", item.type(), "Treatment"):
             returned["descriptorType"] = "treatmentDescriptor"
             template = self.descriptor_templates['treatmentDescriptor']
         elif self.analyzer.issubtype("SCHEMA", item.type(), "Patient"):
             returned["descriptorType"] = "patientDescriptor"
             template = self.descriptor_templates['patientDescriptor']
-        elif self.analyzer.issubtype("SCHEMA", item.type(), "BodyPart"):
-            returned["descriptorType"] = "bodyPartDescriptor"
-            template = self.descriptor_templates['bodyPartDescriptor']
         else:
             returned["descriptorType"] = "objectDescriptor"
             template = self.descriptor_templates['objectDescriptor']
@@ -89,6 +98,15 @@ class HesperianSpecializer(CoreSpecializer):
             elif returned['referent'] == "addressee":
                 return self.resolve_referents(returned, antecedents=self.addressees)['objectDescriptor']
 
+        return returned
+
+    def get_hesperianBagDescriptor(self, bag):
+        returned = {'descriptorType': 'hesperianBagDescriptor'}
+        template = self.descriptor_templates["hesperianBagDescriptor"]
+        for k, v in template.items():
+            value = self.fill_value(k, v, bag)
+            if value:
+                returned[k] = value
         return returned
 
     def compatible_referents(self, pronoun, ref):

@@ -53,7 +53,8 @@
             },
             "theme": {
                 "descriptor": "objectDescriptor"
-            }
+            },
+            "actionary": "actionary"
         },
         "Manipulation": {
             "parents": ["Process"],
@@ -203,7 +204,7 @@
             }
         },
         "Symptom": {
-            "experiencer": {
+            "patient": {
                 "descriptor": "objectDescriptor"
             },
             "symptom": {
