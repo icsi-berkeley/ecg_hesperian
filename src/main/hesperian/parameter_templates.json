@@ -203,17 +203,29 @@
                 "descriptor": "processFeatures"
             }
         },
-        "Symptom": {
+        "AbortionProcess": {
+            "treatment": {
+                "descriptor": "objectDescriptor"
+            },
             "patient": {
                 "descriptor": "objectDescriptor"
             },
-            "symptom": {
+            "condition": {
                 "descriptor": "objectDescriptor"
             },
-            "disease": {
+            "actionary": "actionary",
+            "p_features": {
+                "descriptor": "processFeatures"
+            }
+        },
+        "TreatmentProcess": {
+            "treatment": {
                 "descriptor": "objectDescriptor"
             },
-            "location": {
+            "patient": {
+                "descriptor": "objectDescriptor"
+            },
+            "condition": {
                 "descriptor": "objectDescriptor"
             },
             "actionary": "actionary",

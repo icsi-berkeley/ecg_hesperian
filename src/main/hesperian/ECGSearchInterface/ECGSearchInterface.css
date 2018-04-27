@@ -36,7 +36,7 @@
      Also, hesperian has nonprofit google custom search so ads won't appear at all. */
 }
 
-.clarification-question {
+.clarification-question, .synonym-question {
   box-sizing: border-box;
 
   width: 670px;
@@ -44,8 +44,11 @@
   padding: 10px 21px 10px;
   margin: 0px auto;
 
-  border-bottom: 1px solid #999;
   text-align: left;
+}
+
+.clarification-question {
+  border-bottom: 1px solid #999;
 }
 
 .clarification-question p {
@@ -55,12 +58,12 @@
   padding-bottom: 0px;
 }
 
-.clarification-question h4 {
+.clarification-question h4, .synonym-question h4 {
   margin-top: 0px;
   padding-top: 0px;
 }
 
-.clarification-question #clarify-button {
+.clarification-question #clarify-button, .synonym-question #clarify-button {
   box-sizing: border-box;
 
   width: 100px;
@@ -81,23 +84,56 @@
   text-align: center;
 }
 
-.clarification-question #clarify-button.disabled {
+.clarification-question #clarify-button.disabled, .synonym-question #clarify-button.disabled {
   color: #666;
   background-color: #ddd;
 }
 
-.clarification-question #clarify-button.enabled {
+.clarification-question #clarify-button.enabled, .synonym-question #clarify-button.enabled {
   background-color: #36c;
   cursor: pointer;
 }
 
-.clarification-question #clarify-button.enabled:hover {
+.clarification-question #clarify-button.enabled:hover, .synonym-question #clarify-button.enabled:hover {
   background-color: #447ff5;
 }
 
 .clarification-question input[type="radio"] {
   margin-top: -1px;
   vertical-align: middle;
+}
+
+.synonym-question h4 {
+  margin-bottom: 15px;
+}
+
+.synonym-question label {
+  font-size: 16px;
+}
+
+.synonym-question label span {
+  font-size: 32px;
+
+  position: relative;
+  top: 3px;
+}
+
+.synonym-question input[type="text"] {
+  background: none;
+  border: none;
+  border-bottom: 1px dashed #000;
+  font-size: 16px;
+  transition-duration: 0.3s;
+  width: 150px;
+}
+
+.synonym-question input[type="text"]:focus {
+  outline: none;
+  border-bottom: 1px dashed rgb(255, 76, 28);
+}
+
+.synonym-question #clarify-button {
+  margin-top: 15px;
 }
 
 

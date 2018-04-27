@@ -80,17 +80,24 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         self.analyzer = Analyzer(self.analyzer_port)
 
     def wiki_callback(self, request):
+        print(request)
         sid = request['sid']
         if not self.data.touch(sid):
             sid = self.data.create_user()
         if request['clarification']:
             self.process_clarification(sid, request['clarification'])
+        elif request['synonyms']:
+            for swap in request['synonyms']:
+                old, new = swap.split('>')
+                request['query'] = request['query'].replace(old, new)
         self.transport.send(self.ui_address, {'text': request['query'], 'sid': sid})
 
     def solve(self, ntuple):
         pprint(ntuple)
         self.extracted_information = ListedDictionary(self)
         response = {'sid': ntuple['sid']}
+        if 'FAILURE_TYPE' in ntuple:
+            return self.process_failure(ntuple, response)
         pred_type = ntuple['predicate_type'] if 'predicate_type' in ntuple else 'unstructured'
         try:
             dispatch = getattr(self, "solve_%s" %pred_type)
@@ -103,6 +110,16 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
             traceback.print_exc()
             message = "I cannot solve a(n) {}.".format(pred_type)
             self.identification_failure(message)
+
+    def process_failure(self, ntuple, response):
+        if ntuple['FAILURE_TYPE'] == 'UNKNOWN_WORD':
+            response['error'] = "Unknown words: {}. Please rephrase your query.".format(ntuple['FAILURES'])
+            response['failures'] = ntuple['FAILURES']
+            response['failure_type'] = ntuple['FAILURE_TYPE']
+        elif ntuple['FAILURE_TYPE'] == 'CANNOT_ANALYZE':
+            response['error'] = "Analysis of query failed."
+            response['failure_type'] = ntuple['FAILURE_TYPE']
+        self.transport.send(self.wiki_address, response)
 
     def merge_user_information(self, sid):
         """Right now this simply overwrites all user info for the extracted fields but in the
@@ -235,8 +252,18 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
             self.data.set_data(sid, clarification['field'].lower(), clarification['val'].lower())
 
 
+    @depth
     def solve_unstructured(self, ntuple):
         if 'descriptorType' in ntuple:
+            if 'specificWh' in ntuple:
+                self.extracted_information['specificWh'] = ntuple['specificWh']
+            if 'modifier' in ntuple:
+                self.solve_unstructured(ntuple['modifier']['objectDescriptor'])
+            if 'property' in ntuple:
+                self.solve_unstructured(ntuple['property']['objectDescriptor'])
+            if 'locationDescriptor' in ntuple:
+                self.solve_unstructured(ntuple['locationDescriptor']['objectDescriptor'])
+
             if ntuple['descriptorType'] in ['conditionDescriptor', 'symptomDescriptor', 'diseaseDescriptor']:
                 return self.solve_conditionDescriptor(ntuple)
             elif ntuple['descriptorType'] == 'treatmentDescriptor':
@@ -250,10 +277,12 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
             else:
                 return self.solve_basic(ntuple)
 
-    @depth
     def solve_conditionDescriptor(self, conditionDescriptor):
         descriptorType = conditionDescriptor['descriptorType']
-        condition = conditionDescriptor['type']
+        if 'type' in conditionDescriptor:
+          condition = conditionDescriptor['type']
+        else:
+          condition = None
 
         if descriptorType == 'conditionDescriptor':
             type = 'condition'
@@ -264,26 +293,20 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
             if condition != 'symptomType':
                 self.extracted_information['symptom'] = condition
             if 'disease' in conditionDescriptor:
-                self.solve_conditionDescriptor(conditionDescriptor['disease']['objectDescriptor'])
+                self.solve_unstructured(conditionDescriptor['disease']['objectDescriptor'])
         elif descriptorType == 'diseaseDescriptor':
             type = 'disease'
             if condition != 'diseaseType':
                 self.extracted_information['disease'] = condition
             if 'symptom' in conditionDescriptor:
-                self.solve_conditionDescriptor(conditionDescriptor['symptom']['objectDescriptor'])
+                self.solve_unstructured(conditionDescriptor['symptom']['objectDescriptor'])
         else:
             raise Error('Should never reach this point')
 
         if 'trigger' in conditionDescriptor:
             self.solve_unstructured(conditionDescriptor['trigger']['objectDescriptor'])
         if 'patient' in conditionDescriptor:
-            self.solve_patientDescriptor(conditionDescriptor['patient']['objectDescriptor'])
-        if 'property' in conditionDescriptor:
-            self.solve_unstructured(conditionDescriptor['property']['objectDescriptor'])
-        if 'locationDescriptor' in conditionDescriptor:
-            self.solve_unstructured(conditionDescriptor['locationDescriptor']['objectDescriptor'])
-        if 'modifier' in conditionDescriptor:
-            self.solve_unstructured(conditionDescriptor['modifier']['objectDescriptor'])
+            self.solve_unstructured(conditionDescriptor['patient']['objectDescriptor'])
         if 'property' in conditionDescriptor:
             self.solve_unstructured(conditionDescriptor['property']['objectDescriptor'])
 
@@ -302,25 +325,18 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
             self.extracted_information['{}_location'.format(type)] = conditionDescriptor['bodyPart2']
 
 
-    @depth
     def solve_treatmentDescriptor(self, treatmentDescriptor):
-        treatment = treatmentDescriptor['type']
-        if treatment not in ['treatmentType', 'drugType', 'procedureType']:
-            # base = ["{} (treatment|medicine|operation)".format(treatment), "{}".format(treatment)]
-            self.extracted_information['treatment'] = treatment
+        if 'type' in treatmentDescriptor:
+          treatment = treatmentDescriptor['type']
+          if treatment not in ['treatmentType', 'drugType', 'procedureType']:
+              self.extracted_information['treatment'] = treatment
 
         if 'drug' in treatmentDescriptor:
-            self.solve_treatmentDescriptor(treatmentDescriptor['drug']['objectDescriptor'])
+            self.solve_unstructured(treatmentDescriptor['drug']['objectDescriptor'])
         if 'patient' in treatmentDescriptor:
-            self.solve_patientDescriptor(treatmentDescriptor['patient']['objectDescriptor'])
+            self.solve_unstructured(treatmentDescriptor['patient']['objectDescriptor'])
         if 'condition' in treatmentDescriptor:
             self.solve_unstructured(treatmentDescriptor['condition']['objectDescriptor'])
-        if 'locationDescriptor' in treatmentDescriptor:
-            self.solve_unstructured(treatmentDescriptor['locationDescriptor']['objectDescriptor'])
-        if 'modifier' in treatmentDescriptor:
-            self.solve_unstructured(treatmentDescriptor['modifier']['objectDescriptor'])
-        if 'property' in treatmentDescriptor:
-            self.solve_unstructured(treatmentDescriptor['property']['objectDescriptor'])
 
         if 'location' in treatmentDescriptor:
             location = self.get_location(treatmentDescriptor['location']['objectDescriptor'])
@@ -330,7 +346,6 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
             self.extracted_information['treatment_location'] = treatmentDescriptor['bodyPart2']
 
 
-    @depth
     def solve_patientDescriptor(self, patientDescriptor):
         if 'gender' in patientDescriptor and patientDescriptor['gender'] != 'genderValues':
             self.extracted_information['gender'] = patientDescriptor['gender']
@@ -378,9 +393,7 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
     @depth
     def solve_basic(self, descriptor):
         print("{} defaulted to solve_basic".format(descriptor['descriptorType']))
-        if 'specificWh' in descriptor:
-            self.extracted_information['specificWh'] = descriptor['specificWh']
-        else:
+        if 'type' in descriptor:
             self.extracted_information['basicType'] = "{}".format(descriptor['type'])
 
     @depth
@@ -433,6 +446,20 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         self.extracted_information['actionary'] = eventDescriptor['actionary']
         self.solve_unstructured(eventDescriptor['actedUpon']['objectDescriptor'])
         self.solve_unstructured(eventDescriptor['protagonist']['objectDescriptor'])
+
+    @depth
+    def solve_event_abortionprocess(self, eventDescriptor):
+        self.extracted_information['actionary'] = eventDescriptor['eventProcess']['actionary']
+        self.solve_unstructured(eventDescriptor['eventProcess']['condition']['objectDescriptor'])
+        self.solve_unstructured(eventDescriptor['eventProcess']['patient']['objectDescriptor'])
+        self.solve_unstructured(eventDescriptor['eventProcess']['treatment']['objectDescriptor'])
+
+    @depth
+    def solve_event_treatmentprocess(self, eventDescriptor):
+        self.extracted_information['actionary'] = eventDescriptor['eventProcess']['actionary']
+        self.solve_unstructured(eventDescriptor['eventProcess']['condition']['objectDescriptor'])
+        self.solve_unstructured(eventDescriptor['eventProcess']['patient']['objectDescriptor'])
+        self.solve_unstructured(eventDescriptor['eventProcess']['treatment']['objectDescriptor'])
 
 if __name__ == "__main__":
     solver = BasicHesperianProblemSolver(sys.argv[1:])

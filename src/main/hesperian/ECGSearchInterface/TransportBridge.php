@@ -66,12 +66,16 @@ class TransportBridge {
     $timeout = 30; // 30 second timeout
 
     while (time() - $start_time < $timeout) {
-      $len_str = fgets($this->buffer, 16384);
+      $len_str = trim(fgets($this->buffer, 16384));
       if (strlen($len_str) >= 10) {
         throw new UnexpectedValueException("Response length is insane: $len_str");
       }
 
-      $len = (int) trim($len_str);
+      if (strlen($len_str) == 0) {
+        continue;
+      }
+
+      $len = (int) $len_str;
       if ($len <= 0) {
         throw new UnexpectedValueException("Response length is insanely short: $len_str");
       }

@@ -131,21 +131,76 @@ $(document).ready(function() {
     return clarInfo;
   }
 
+  function renderSynonyms(failures) {
+    var synonym_fields_html = '<div class="synonym-question"> \
+                                <h4>We had trouble understanding a few words. Could you please \
+                                   provide synonyms?:</h4>';
+    for (var i = 0; i < failures.length; i++) {
+      synonym_fields_html += '<label for="syn-' + failures[i] + '">' + failures[i] + ' <span>&rarr;</span></label>';
+      synonym_fields_html += '<input type="text" name="ecg-synonyms" \
+                                                 id="syn-' + failures[i] + '" \
+                                                 data-original="' + failures[i] + '" \
+                                                 placeholder="synonym...">';
+    }
+    synonym_fields_html += '<div id="clarify-button" class="disabled">Submit</div></div>';
+    $('#resultboxecg').prepend(synonym_fields_html);
+    $('#resultboxecg .loading-icon').remove();
+
+    var inputs = $('.synonym-question input[type=text]');
+    inputs.on('keyup', function() {
+      var filled_inputs = inputs.filter(function() { return $(this).val().trim() != ""; });
+      if (inputs.length != filled_inputs.length) {
+        $('#clarify-button').removeClass('enabled').addClass('disabled');
+      } else {
+        $('#clarify-button').removeClass('disabled').addClass('enabled');
+      }
+    });
+    $('#clarify-button').on('click', function() {
+      if ($(this).hasClass('enabled'))
+        executeECGSearch();
+    });
+  }
+
+  function getSynonymsInformation() {
+    // Only return a result if all synonym fields are filled in
+    if ($('.synonym-question').length == 0)
+      return null;
+    var inputs = $('.synonym-question input[type="text"]');
+    var filled_inputs = inputs.filter(function() { return $(this).val().trim() != ""; });
+    if (inputs.length != filled_inputs.length)
+      return null;
+    var synInfo = {
+      'values': ''
+    };
+    for (var i = 0; i < inputs.length; i++) {
+      synInfo['values'] += $(inputs[i]).data('original') + '>' + $(inputs[i]).val() + '|';
+    }
+    return synInfo;
+  }
+
   function processResponse(response) {
     sessionStorage.setItem('sid', response['sid']);
     if ('queries' in response)
       executeQueries(response['queries'], 'resultboxgoogle-ecg', true);
     if ('clarification' in response)
       renderClarification(response['clarification']);
-    if ('fail' in response && response['fail'] == 'true') {
-      console.log(response);
-      failResponse();
+    if ('failure_type' in response) {
+      if (response['failure_type'] == 'UNKNOWN_WORD') {
+        renderSynonyms(response['failures'])
+      } else{
+        failResponse(response);
+      }
     }
   }
 
-  function failResponse() {
+  function failResponse(error) {
     $('#resultboxgoogle-ecg .loading-icon').remove();
-    $('#resultboxgoogle-ecg').text('Unable to load ECG results');
+    if ('error' in error && typeof error['error'] == 'string') {
+      var errorMessage = error['error'];
+    } else {
+      var errorMessage = 'Unable to load ECG results';
+    }
+    $('#resultboxgoogle-ecg').text(errorMessage);
   }
 
   function setupECGSearchInterface() {
@@ -198,15 +253,25 @@ $(document).ready(function() {
       request['clarification'] = 0;
     }
 
+    var synonyms = getSynonymsInformation();
+    if (synonyms != null) {
+      $.extend(request, {
+        'synonyms' : 1,
+        'synonym_values' : synonyms['values']
+      });
+    } else {
+      request['synonyms'] = 0;
+    }
+
     $('#resultboxecg').html(ecgLoadingIcon);
 
+    console.log(request);
     $.get('/w/api.php', request).done(function(response) {
       console.log(response);
       if ('ECGSearchInterfaceAPI' in response)
         processResponse(response['ECGSearchInterfaceAPI']);
       else {
-        console.log(response);
-        failResponse();
+        failResponse(response);
       }
     }).fail(failResponse);
   }

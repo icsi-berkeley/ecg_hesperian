@@ -92,14 +92,16 @@ class HesperianWordChecker(object):
 
   def check(self, sentence):
     tagged_words = nltk.pos_tag(nltk.word_tokenize(sentence))
-    checked, modified = [], []
+    checked, modified, failed = [], [], []
     for i in range(len(tagged_words)):
       checked_word, is_modified = self.check_word(i, tagged_words)
       if is_modified is None:
-        print("We should use this opportunity to ask for clarification: {}".format(checked_word))
+        failed.append(True)
+      else:
+        failed.append(False)
       checked.append(checked_word)
-      modified.append(is_modified)
-    return {'checked': checked, 'modified': modified}
+      modified.append(bool(is_modified))
+    return {'checked': checked, 'modified': modified, 'failed': failed}
 
 
   def check_word(self, i, tagged_words):
@@ -201,3 +203,11 @@ class HesperianWordChecker(object):
           corrected += " " + checked[index]
           index += 1
     return corrected.strip()
+
+  def get_failed(self, table):
+    checked, failed = table['checked'], table['failed']
+    failures = []
+    for word, is_fail in zip(checked, failed):
+      if is_fail:
+        failures.append(word)
+    return failures

@@ -63,8 +63,11 @@ class HesperianUserAgent(UserAgent):
 
     def process_input(self, msg):
         table = self.word_checker.check(msg)
-        if table:
-          msg = self.word_checker.join_checked(table['checked'])
+        if any(table['failed']):
+          failures = self.word_checker.get_failed(table)
+          return {'FAILURES': failures, 'FAILURE_TYPE': 'UNKNOWN_WORD'}
+
+        msg = self.word_checker.join_checked(table['checked'])
         print(msg)
         try:
             full_parse = self.analyzer.full_parse(msg)
@@ -87,6 +90,7 @@ class HesperianUserAgent(UserAgent):
             raise Exception('Unable to specialize any semspecs')
         except Exception as e:
             print(e)
+            return {'FAILURE_TYPE': 'CANNOT_ANALYZE'}
 
 if __name__ == "__main__":
     ui = HesperianUserAgent(sys.argv[1], sys.argv[2:])
