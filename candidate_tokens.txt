@@ -1,0 +1,4 @@
+procedure ::  ProcedureType :: self.m.ontological-category <-- @treatment
+
+procedure ::  ProcedureType :: self.m.ontological-category <-- @treatment
+

@@ -82,15 +82,18 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
     def wiki_callback(self, request):
         print(request)
         sid = request['sid']
+        synonyms = False
         if not self.data.touch(sid):
             sid = self.data.create_user()
         if request['clarification']:
             self.process_clarification(sid, request['clarification'])
         elif request['synonyms']:
+            synonyms = []
             for swap in request['synonyms']:
                 old, new = swap.split('>')
                 request['query'] = request['query'].replace(old, new)
-        self.transport.send(self.ui_address, {'text': request['query'], 'sid': sid})
+                synonyms.append((old, new))
+        self.transport.send(self.ui_address, {'text': request['query'], 'sid': sid, 'synonyms': synonyms})
 
     def solve(self, ntuple):
         pprint(ntuple)
@@ -393,7 +396,7 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
     @depth
     def solve_basic(self, descriptor):
         print("{} defaulted to solve_basic".format(descriptor['descriptorType']))
-        if 'type' in descriptor:
+        if 'type' in descriptor and descriptor['type'] not in ['person', 'agent']:
             self.extracted_information['basicType'] = "{}".format(descriptor['type'])
 
     @depth

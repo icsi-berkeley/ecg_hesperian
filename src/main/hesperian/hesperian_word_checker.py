@@ -23,6 +23,7 @@ TAG_DICT = {'JJ':'Positive', 'JJR':'Comparative', 'JJS':'Superlative',
   'VB':'Infinitive', 'VBD':'FirstPersonPastTenseSingular',
   'VBG':'ParticiplePresentTense', 'VBN':'ParticiplePastTense',
   'VBP':'FirstPersonPresentTenseSingular', 'VBZ':'PresentTenseSingularThirdPerson'}
+CANDIDATE_LOG_FILE = "candidate_tokens.txt"
 
 class HesperianWordChecker(object):
 
@@ -34,9 +35,11 @@ class HesperianWordChecker(object):
     self.read_prefs(prefs_path)
 
     self.tokens_in_grammar = set()
+    self.tokens_info = dict()
     self.read_tokens()
 
     self.lemma_to_word = dict()
+    self.word_to_lemma = dict()
     self.read_morphs()
 
     self.lexicon = enchant.pypwl.PyPWL()
@@ -69,7 +72,10 @@ class HesperianWordChecker(object):
     for token_file in self.token_files:
       with open(token_file) as f:
         for line in f:
-          self.tokens_in_grammar.add(line.split('::')[0].strip())
+          token = line.split('::')[0].strip()
+          info = line.split('::')[1:]
+          self.tokens_in_grammar.add(token)
+          self.tokens_info[token] = info
 
   def read_morphs(self):
     for morph_file in self.morph_files:
@@ -78,6 +84,7 @@ class HesperianWordChecker(object):
           morph = line.split()
           word = morph[0]
           for lemma, tense in zip(morph[1::2], morph[2::2]):
+            self.word_to_lemma[word] = lemma
             tense_key = ''.join(sorted(re.split('/|,', tense)))
             if lemma in self.lemma_to_word:
               self.lemma_to_word[lemma][tense_key] = word
@@ -211,3 +218,20 @@ class HesperianWordChecker(object):
       if is_fail:
         failures.append(word)
     return failures
+
+  def log_synonyms(self, table, synonyms):
+    """None of the words in table should have failed"""
+    for (old, new) in synonyms:
+      if new in table['checked'] and new in self.word_to_lemma:
+        new_lemma = self.word_to_lemma[new]
+        token_info = self.tokens_info[new_lemma]
+        needs_morph = False
+        if old in self.word_to_lemma:
+          old_lemma = self.word_to_lemma[old]
+        else:
+          old_lemma = old
+          needs_morph = True
+        with open(CANDIDATE_LOG_FILE, 'a+') as f:
+          if needs_morph:
+            f.write("NEEDS MORPHOLOGY ENTRY: ")
+          f.write("{} :: {}\n".format(old_lemma, "::".join(token_info)))

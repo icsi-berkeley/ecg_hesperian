@@ -30,7 +30,7 @@ class HesperianUserAgent(UserAgent):
         if self.is_quit(ntuple):
             self.close()
         elif msg != None and msg != "":
-            new_ntuple = self.process_input(msg)
+            new_ntuple = self.process_input(msg, ntuple['synonyms'])
             if new_ntuple and new_ntuple != "null":
                 new_ntuple['original_query'] = msg
                 new_ntuple['sid'] = ntuple['sid']
@@ -61,11 +61,13 @@ class HesperianUserAgent(UserAgent):
             self.clarification = False
 
 
-    def process_input(self, msg):
+    def process_input(self, msg, synonyms):
         table = self.word_checker.check(msg)
         if any(table['failed']):
-          failures = self.word_checker.get_failed(table)
-          return {'FAILURES': failures, 'FAILURE_TYPE': 'UNKNOWN_WORD'}
+            failures = self.word_checker.get_failed(table)
+            return {'FAILURES': failures, 'FAILURE_TYPE': 'UNKNOWN_WORD'}
+        if synonyms:
+            self.word_checker.log_synonyms(table, synonyms)
 
         msg = self.word_checker.join_checked(table['checked'])
         print(msg)
