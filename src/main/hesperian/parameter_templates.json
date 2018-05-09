@@ -232,6 +232,21 @@
             "p_features": {
                 "descriptor": "processFeatures"
             }
+        },
+        "ConditionProcess": {
+            "condition": {
+                "descriptor": "objectDescriptor"
+            },
+            "patient": {
+                "descriptor": "objectDescriptor"
+            },
+            "cause": {
+                "descriptor": "objectDescriptor"
+            },
+            "actionary": "actionary",
+            "p_features": {
+                "descriptor": "processFeatures"
+            }
         }
     }
 }

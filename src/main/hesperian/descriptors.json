@@ -37,7 +37,7 @@
     "treatmentDescriptor": {
         "parents": ["objectDescriptor"],
         "patient": {"descriptor": "objectDescriptor"},
-        "drug": {"descriptor": "objectDescriptor"},
+        "method": {"descriptor": "objectDescriptor"},
         "location": {"descriptor": "objectDescriptor"},
         "condition": {"descriptor": "objectDescriptor"}
     },

@@ -167,7 +167,8 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
 
     def get_query_term(self, key, value, depth):
         if key == 'gender' and value == 'female':
-            return '"Where Women Have No Doctor"'
+            # return '"Where Women Have No Doctor"'
+            return 'where_women_have_no_doctor'
         return value
 
     def get_spices(self, key):
@@ -334,8 +335,8 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
           if treatment not in ['treatmentType', 'drugType', 'procedureType']:
               self.extracted_information['treatment'] = treatment
 
-        if 'drug' in treatmentDescriptor:
-            self.solve_unstructured(treatmentDescriptor['drug']['objectDescriptor'])
+        if 'method' in treatmentDescriptor:
+            self.solve_unstructured(treatmentDescriptor['method']['objectDescriptor'])
         if 'patient' in treatmentDescriptor:
             self.solve_unstructured(treatmentDescriptor['patient']['objectDescriptor'])
         if 'condition' in treatmentDescriptor:
@@ -353,7 +354,9 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         if 'gender' in patientDescriptor and patientDescriptor['gender'] != 'genderValues':
             self.extracted_information['gender'] = patientDescriptor['gender']
         if 'age' in patientDescriptor and patientDescriptor['age'] != 'ageGroup':
-            self.extracted_information['age'] = patientDescriptor['age'][0:-5] # removes the 'Group' off the end
+            age = patientDescriptor['age'][0:-5] # removes the 'Group' off the end
+            if age != "adult": # adult seems to be the default and including it hurts results
+              self.extracted_information['age'] = age
         if 'numericalAge' in patientDescriptor:
             amount = patientDescriptor['numericalAge']['quantity']['amount']['value']
             units = patientDescriptor['numericalAge']['quantity']['units']
@@ -369,6 +372,8 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
     def get_location(self, locationDescriptor):
         location = locationDescriptor['type']
         if location != 'bodyPart2':
+            if 'BodyPart' in location:
+                location = location[0:-8]
             if 'side' in locationDescriptor:
                 #NOTE: currently cannot handle serial adjectives (e.g. lower left side) due to specializer
                 location = locationDescriptor['side'][0:-4] + " " + location
@@ -391,13 +396,17 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
             dispatch = getattr(self, "solve_event_%s" %eventDescriptor['eventProcess']['template'].lower())
         else:
             dispatch = getattr(self, "solve_event_%s" %eventDescriptor['template'].lower())
+            eventDescriptor = {'eventProcess': eventDescriptor}
         return dispatch(eventDescriptor)
 
     @depth
     def solve_basic(self, descriptor):
         print("{} defaulted to solve_basic".format(descriptor['descriptorType']))
-        if 'type' in descriptor and descriptor['type'] not in ['person', 'agent']:
-            self.extracted_information['basicType'] = "{}".format(descriptor['type'])
+        if 'type' in descriptor and descriptor['type'] not in ['person', 'agent', 'hesperian']:
+            type = descriptor['type']
+            if "_" in type:
+              type = type.split("_")[0]
+            self.extracted_information['basicType'] = type
 
     @depth
     def solve_query(self, ntuple):
@@ -446,9 +455,9 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
 
     @depth
     def solve_event_forceapplication(self, eventDescriptor):
-        self.extracted_information['actionary'] = eventDescriptor['actionary']
-        self.solve_unstructured(eventDescriptor['actedUpon']['objectDescriptor'])
-        self.solve_unstructured(eventDescriptor['protagonist']['objectDescriptor'])
+        self.extracted_information['actionary'] = eventDescriptor['eventProcess']['actionary']
+        self.solve_unstructured(eventDescriptor['eventProcess']['actedUpon']['objectDescriptor'])
+        self.solve_unstructured(eventDescriptor['eventProcess']['protagonist']['objectDescriptor'])
 
     @depth
     def solve_event_abortionprocess(self, eventDescriptor):
@@ -463,6 +472,20 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         self.solve_unstructured(eventDescriptor['eventProcess']['condition']['objectDescriptor'])
         self.solve_unstructured(eventDescriptor['eventProcess']['patient']['objectDescriptor'])
         self.solve_unstructured(eventDescriptor['eventProcess']['treatment']['objectDescriptor'])
+
+    @depth
+    def solve_event_conditionprocess(self, eventDescriptor):
+        self.extracted_information['actionary'] = eventDescriptor['eventProcess']['actionary']
+        self.solve_unstructured(eventDescriptor['eventProcess']['condition']['objectDescriptor'])
+        self.solve_unstructured(eventDescriptor['eventProcess']['patient']['objectDescriptor'])
+        self.solve_unstructured(eventDescriptor['eventProcess']['cause']['objectDescriptor'])
+
+    @depth
+    def solve_event_causedprocess(self, eventDescriptor):
+        self.extracted_information['actionary'] = eventDescriptor['eventProcess']['actionary']
+        self.solve_unstructured(eventDescriptor['eventProcess']['affectedEntity']['objectDescriptor'])
+        self.solve_eventDescriptor(eventDescriptor['eventProcess']['affectedProcess'])
+
 
 if __name__ == "__main__":
     solver = BasicHesperianProblemSolver(sys.argv[1:])
