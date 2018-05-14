@@ -80,6 +80,8 @@ class BasicHesperianProblemSolver(CoreProblemSolver):
         self.analyzer = Analyzer(self.analyzer_port)
 
     def wiki_callback(self, request):
+        if self.is_quit(request):
+            return self.close()
         print(request)
         sid = request['sid']
         synonyms = False
